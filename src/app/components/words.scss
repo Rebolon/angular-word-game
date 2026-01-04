@@ -7,13 +7,31 @@
     padding: 1rem;
 
     li {
-        padding: 0.5rem 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 10px 15px;
+        border-bottom: 1px solid var(--glass-border);
+        font-weight: 500;
         color: var(--text-main);
-        font-size: 1.1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
 
         &:last-child {
             border-bottom: none;
+        }
+
+        .word-text {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .word-points {
+            font-size: 0.8rem;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            opacity: 0.9;
         }
 
         &:hover {

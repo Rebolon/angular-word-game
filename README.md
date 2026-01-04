@@ -18,3 +18,12 @@ Run `npm install`
 ### Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+
+
+### TODO
+
+* Add points on the right of each word found
+* Improve loding dictionnary : 
+    * is there a way to make it faster ?
+    * add a progress bar because for instance it uses toast and user doesn't know if it's still loading
+* Centrer le chrono

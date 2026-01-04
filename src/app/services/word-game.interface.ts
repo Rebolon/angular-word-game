@@ -87,4 +87,5 @@ export interface AlphabetGame {
 
 export interface GameScoring {
   calculateScore(words: string[]): number;
+  getWordScore(word: string): number;
 }

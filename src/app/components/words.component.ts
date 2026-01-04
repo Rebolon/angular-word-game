@@ -12,7 +12,10 @@ import { AsyncPipe } from '@angular/common';
       @if (words$ | async; as words) {
         @if (words.length) {
           @for (word of words; track word) {
-            <li>{{word}}</li>
+            <li>
+              <span class="word-text">{{word}}</span>
+              <span class="word-points">+{{getWordScore(word)}}</span>
+            </li>
           }
         } @else {
           <li class="empty-message">Aucun mot trouvé</li>
@@ -27,5 +30,9 @@ export class WordsComponent {
 
   get words$() {
     return this.board?.gameBehavior.words$;
+  }
+
+  protected getWordScore(word: string): number {
+    return this.board.scoring.getWordScore(word);
   }
 }
