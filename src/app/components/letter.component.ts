@@ -1,21 +1,32 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { BoardCase, CaseStatus, GameBehavior } from '../services/word-game.interface';
 import { NgClass } from '@angular/common';
 import { MatRippleModule } from '@angular/material/core';
 
 @Component({
-    selector: 'my-letter',
-    imports: [NgClass],
-    template: `
+  selector: 'my-letter',
+  standalone: true,
+  imports: [NgClass, MatRippleModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
     <div
       matRipple
-      class="flex-item primary"
-      [ngClass]="{hover: mouseOver, clicked: isClicked()}"
+      class="letter-tile"
+      [ngClass]="{
+        'selected': isClicked(),
+        'hover': mouseOver
+      }"
+      role="button"
+      tabindex="0"
       (mouseover)="mouseOver = true"
       (mouseout)="mouseOver = false"
-      (click)="click()">{{case.value.value}}</div>
+      (click)="click()"
+      (keydown.enter)="click()"
+      (keydown.space)="click()">
+      {{case.value.value}}
+    </div>
   `,
-    styleUrls: ['./letter.scss']
+  styleUrls: ['./letter.scss']
 })
 export class LetterComponent {
   @Input({ required: true }) behavior!: GameBehavior;

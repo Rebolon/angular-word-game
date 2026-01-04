@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { GameType } from '../services/word-game.interface';
 import { AsyncPipe } from '@angular/common';
 import { GameSelectorForm } from '../game.form';
@@ -10,13 +10,15 @@ import { MatButtonModule } from '@angular/material/button';
 
 
 @Component({
-    selector: 'my-game-select',
-    imports: [AsyncPipe, ReactiveFormsModule, MatSelectModule, MatButtonModule],
-    template: `
+  selector: 'my-game-select',
+  standalone: true,
+  imports: [AsyncPipe, ReactiveFormsModule, MatSelectModule, MatButtonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
     <form
       [formGroup]="form"
       (ngSubmit)="selectGame()">
-      <mat-form-field>
+      <mat-form-field appearance="fill">
         <mat-label>Choix du mode de jeu</mat-label>
         <mat-select
             formControlName="game"
@@ -29,11 +31,17 @@ import { MatButtonModule } from '@angular/material/button';
           }
         </mat-select>
       </mat-form-field>
-      <br />
-      <button mat-raised-button type="submit" [disabled]="dbIsLoading() | async">Jouer</button>
+      
+      <button mat-raised-button color="primary" type="submit" [disabled]="dbIsLoading() | async">
+        @if (dbIsLoading() | async) {
+          Chargement...
+        } @else {
+          Jouer
+        }
+      </button>
     </form>
   `,
-    styleUrls: ['./game-select.scss']
+  styleUrls: ['./game-select.scss']
 })
 export class GameSelectComponent {
   @Input('selected') selected!: GameType;

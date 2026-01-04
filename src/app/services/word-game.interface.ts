@@ -1,4 +1,5 @@
 import { Observable } from "rxjs";
+import { signal, WritableSignal } from "@angular/core";
 
 export interface Game {
   readonly boardConfig: BoardConfig;
@@ -36,6 +37,7 @@ export interface GameBehavior {
   selectCase(boardCase: BoardCase): void
   unSelectCase(boardCase: BoardCase): void
   getWords(): string[]
+  words$: Observable<string[]>
 }
 
 export interface BoardCase {
@@ -47,18 +49,22 @@ export interface BoardCase {
 }
 
 export class BoardCase implements BoardCase {
-  constructor(readonly coordinates: Coordinates, readonly value: CaseValue, protected status: CaseStatus = CaseStatus.CLEAR) {}
-  
-  selectCase(): void {
-    this.status = CaseStatus.CLICKED;
+  #status: WritableSignal<CaseStatus>;
+
+  constructor(readonly coordinates: Coordinates, readonly value: CaseValue, status: CaseStatus = CaseStatus.CLEAR) {
+    this.#status = signal(status);
   }
-  
-  unSelectCase(): void { 
-    this.status = CaseStatus.CLEAR;
+
+  selectCase(): void {
+    this.#status.set(CaseStatus.CLICKED);
+  }
+
+  unSelectCase(): void {
+    this.#status.set(CaseStatus.CLEAR);
   }
 
   getStatus(): CaseStatus {
-    return this.status;
+    return this.#status();
   }
 }
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReplaySubject, Subject, combineLatestWith, finalize, interval, map, share, takeWhile, tap } from 'rxjs';
@@ -6,9 +6,11 @@ import { inject } from '@angular/core';
 import { DestroyRef } from '@angular/core';
 
 @Component({
-    selector: 'my-countdown',
-    imports: [AsyncPipe],
-    template: `
+  selector: 'my-countdown',
+  standalone: true,
+  imports: [AsyncPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
     <h2>{{time$ | async}}</h2>
   `
 })
@@ -20,21 +22,17 @@ export class CountDownComponent implements OnChanges, OnInit {
 
   private startTime$: Subject<number> = new ReplaySubject(1);
   private myInterval = this.startTime$.pipe(
-    tap((value) => console.log(this.constructor.name, "01", value, new Date())),
     combineLatestWith(interval(1000)),
     tap((value) => {
       if (value[1] === 0) {
         this.started.emit(true);
       }
     }),
-    tap((value) => console.log(this.constructor.name, "02", value, new Date())),
     takeWhile((value) => value[1] <= value[0]),
     share(),
   );
   protected time$ = this.myInterval.pipe(
-    tap((value) => console.log(this.constructor.name, 1, value, new Date())),
     map((value) => value[0] - value[1]),
-    tap((value) => console.log(this.constructor.name, 2, value, new Date())),
     tap((value: number) => {
       if (value === 0) {
         this.ended.emit(true);
@@ -51,8 +49,6 @@ export class CountDownComponent implements OnChanges, OnInit {
 
       return `${hDisplay}${mDisplay}${sDisplay}`;
     }),
-    tap((value) => console.log(this.constructor.name, 3, value, new Date())),
-    finalize(() => console.warn('finally')),
     share()
   );
 
@@ -63,9 +59,6 @@ export class CountDownComponent implements OnChanges, OnInit {
   }
 
   ngOnInit(): void {
-    this.startTime$.pipe(takeUntilDestroyed(this.destroy)).subscribe({
-      next: (value) => console.info('onInit next', value),
-      complete: () => console.warn('startTime$ complete')
-    })
+    this.startTime$.pipe(takeUntilDestroyed(this.destroy)).subscribe()
   }
 }

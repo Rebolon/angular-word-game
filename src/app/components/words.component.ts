@@ -1,31 +1,31 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Game } from '../services/word-game.interface';
-import { MatListModule } from '@angular/material/list';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
-    selector: 'my-words',
-    imports: [MatListModule],
-    template: `
-    <mat-list dense>
-      @if (hasValidateWords()) {
-        @for (word of getWords(); track word) {
-          <mat-list-item>{{word}}</mat-list-item>
+  selector: 'my-words',
+  standalone: true,
+  imports: [AsyncPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <ul class="words-list">
+      @if (words$ | async; as words) {
+        @if (words.length) {
+          @for (word of words; track word) {
+            <li>{{word}}</li>
+          }
+        } @else {
+          <li class="empty-message">Aucun mot trouvé</li>
         }
-      } @else {
-        <mat-list-item>aucun</mat-list-item>
       }
-    </mat-list>
+    </ul>
   `,
-    styleUrls: ['./grid.scss']
+  styleUrls: ['./words.scss']
 })
 export class WordsComponent {
   @Input() board!: Game;
 
-  protected hasValidateWords(): boolean {
-    return this.board && !!this.board.gameBehavior.getWords().length
-  }
-
-  protected getWords(): string[] {
-    return this.board.gameBehavior.getWords();
+  get words$() {
+    return this.board?.gameBehavior.words$;
   }
 }

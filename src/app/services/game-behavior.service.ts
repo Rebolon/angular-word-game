@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, from, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, from, map, of, switchMap, tap, finalize } from 'rxjs';
 import { Lang, db } from './database/db';
 import { BoardCase, BoardConfig, Coordinates, GameBehavior as GameBehaviorI } from './word-game.interface';
 import { liveQuery } from 'dexie';
@@ -8,15 +8,10 @@ import { liveQuery } from 'dexie';
 // * int the BoardCase ?
 export class GameBehavior implements GameBehaviorI {
   private selectedCases: BoardCase[] = [];
-  private words: string[] = [];
+  #words: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
+  public words$ = this.#words.asObservable();
   private stopped: boolean = false;
-  private currentWordInSerie$: BehaviorSubject<string> = new BehaviorSubject("");
-  private isRealWord$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-
-  debugCurrentWordInSerie$ = this.currentWordInSerie$.asObservable();
-  debugIsRealWord$ = this.isRealWord$.asObservable()
-
-  constructor (private boardConfig: BoardConfig, public readonly gridCases: BoardCase[][]) {
+  constructor(private boardConfig: BoardConfig, public readonly gridCases: BoardCase[][]) {
   }
 
   stop(): void {
@@ -24,41 +19,36 @@ export class GameBehavior implements GameBehaviorI {
   }
 
   validateWord(): Observable<boolean> {
-    // @todo le pb ici est que l'on inject le mot dans le Subject, qu'il est lu par le stream du constructeur, mais que la partie
-    // query sur l'IndexedDb est asynchrone, ce qui place la demande dans l'eventLoop et on reprend l'execution du code ici
-    // et on repart dans la Query quand elle a répondu
-    // => pour corriger ça on peut supprimer le currentWordInSeries$ qui sert à rien
-    // On execute les premiers checks
-    // Puis on subscribe à la query sur IndexedDb et
-    // Si ça marche on fait la tambouille d'ajout du mot et du clean
-    // Si ça marche pas on fait rien et on renvoi juste une erreur qui sera utilisé par le composant
-    const selectedCases = Array.from(this.selectedCases)
+    const selectedCases = Array.from(this.selectedCases);
     const currentWord = selectedCases.length ?
-        selectedCases
-          .reverse()
-          .map((boardCase: BoardCase) => boardCase.value.value)
-          .reduce((boardCaseValue, accumulator = "") => `${accumulator}${boardCaseValue}`) : '';
+      selectedCases
+        .reverse()
+        .map((boardCase: BoardCase) => boardCase.value.value)
+        .reduce((boardCaseValue, accumulator = "") => `${accumulator}${boardCaseValue}`) : '';
 
-    if (this.isAlreadyExistingWord(currentWord)) {
-      throw new Error("Le mot existe déjà");
-    }
-
-    if (!this.hasMinimalLenght(currentWord)) {
-      throw new Error("Longueur minimum de 3 caractères");
-    }
-
-    return this.isRealWord(currentWord).pipe(
-      tap((isRealWord: boolean) => {
-        if (isRealWord) {
-          this.words.push(currentWord);
-          this.cancelSelectedWord();
-
-          return of(isRealWord)
-        } else {
-          throw new Error("Mot inconnu dans le dictionnaire");
+    return of(currentWord).pipe(
+      map(word => {
+        if (this.isAlreadyExistingWord(word)) {
+          throw new Error("Word already found");
         }
-      })
-    )
+
+        if (!this.hasMinimalLenght(word)) {
+          throw new Error("Minimum length is 3 characters");
+        }
+        return word;
+      }),
+      switchMap(word => this.isRealWord(word).pipe(
+        map(isRealWord => {
+          if (isRealWord) {
+            const currentWords = this.#words.getValue();
+            this.#words.next([...currentWords, word].sort());
+            return true;
+          }
+          throw new Error("Unknown word");
+        })
+      )),
+      finalize(() => this.cancelSelectedWord())
+    );
   }
 
   cancelSelectedWord(): void {
@@ -109,7 +99,6 @@ export class GameBehavior implements GameBehaviorI {
 
   selectCase(boardCase: BoardCase): void {
     if (!this.canSelectCase(boardCase)) {
-      console.info('CaseBehavior', 'selectCase', this.selectedCases, boardCase);
       return;
     }
 
@@ -119,7 +108,6 @@ export class GameBehavior implements GameBehaviorI {
 
   unSelectCase(boardCase: BoardCase): void {
     if (!this.canUnSelectCase(boardCase)) {
-      console.info('CaseBehavior', 'unselectCase', this.selectedCases, boardCase);
       return;
     }
 
@@ -127,8 +115,8 @@ export class GameBehavior implements GameBehaviorI {
     boardCase.unSelectCase();
   }
 
-  getWords():  string[] {
-    return this.words.sort();
+  getWords(): string[] {
+    return this.#words.getValue();
   };
 
   public isStopped(): boolean {
@@ -138,7 +126,6 @@ export class GameBehavior implements GameBehaviorI {
   private isAlreadyExistingWord(currentWord: string): boolean {
     const words: string[] = this.getWords();
 
-    console.log('isAlreadyExistingWord', words, currentWord);
 
     return !!words.find((word) => word === currentWord);
   }
@@ -148,10 +135,9 @@ export class GameBehavior implements GameBehaviorI {
   }
 
   private isRealWord(currentWord: string): Observable<boolean> {
-    return from(liveQuery(() => db.words.where("value").equalsIgnoreCase(currentWord).count())).pipe(
-      tap((value) => console.log('isRealWord', value)),
+    return from(db.words.where("value").equalsIgnoreCase(currentWord).count()).pipe(
       map((value: number) => !!value)
-    )
+    );
   }
 
   private isInTheBoard(boardCase: BoardCase): boolean {
@@ -208,8 +194,8 @@ export class GameBehavior implements GameBehaviorI {
 
   private buildAllowedCoordinatesAbscissa(lastClickedCase: BoardCase): number[] {
     let allowedAbscissa: number[] = [];
-    for (let i=-1; i<=1; i++) {
-      const newAbscissa = lastClickedCase.coordinates.x+i;
+    for (let i = -1; i <= 1; i++) {
+      const newAbscissa = lastClickedCase.coordinates.x + i;
       if (newAbscissa >= 0
         && newAbscissa < this.boardConfig.cols) {
         allowedAbscissa.push(newAbscissa);
@@ -220,15 +206,15 @@ export class GameBehavior implements GameBehaviorI {
   }
 
   private buildAllowedCoordinatesOrdinate(lastClickedCase: BoardCase): number[] {
-      let allowedOrdinate: number[] = [];
-      for (let i=-1; i<=1; i++) {
-        const newOrdinate = lastClickedCase.coordinates.y+i;
-        if (newOrdinate >= 0
-          && newOrdinate < this.boardConfig.rows) {
-          allowedOrdinate.push(newOrdinate);
-        }
+    let allowedOrdinate: number[] = [];
+    for (let i = -1; i <= 1; i++) {
+      const newOrdinate = lastClickedCase.coordinates.y + i;
+      if (newOrdinate >= 0
+        && newOrdinate < this.boardConfig.rows) {
+        allowedOrdinate.push(newOrdinate);
       }
-
-      return allowedOrdinate;
     }
+
+    return allowedOrdinate;
+  }
 }

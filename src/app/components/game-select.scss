@@ -1,0 +1,33 @@
+:host {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 3rem;
+    min-width: 300px;
+
+    // Glassmorphism
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 16px;
+
+    mat-form-field {
+        width: 100%;
+    }
+
+    button {
+        width: 100%;
+        padding: 1.5rem;
+        font-size: 1.2rem;
+    }
+}
