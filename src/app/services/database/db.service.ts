@@ -43,9 +43,9 @@ export class DbService {
       const splitData = data.split(' ');
       switch (splitData[0]) {
         case MESSAGES_RESPONSE.DB_COUNTERS.toString():
-          this.counterDictionnary = splitData[0]
-          this.counterDatabase = splitData[1]
-          const percentage = parseInt((this.counterDatabase / this.counterDictionnary *100).toFixed(0))
+          this.counterDictionnary = parseInt(splitData[2], 10);
+          this.counterDatabase = parseInt(splitData[1], 10);
+          const percentage = parseInt((this.counterDatabase / this.counterDictionnary * 100).toFixed(0), 10);
           if (percentage > this.progress.getValue()) {
             this.progress.next(percentage);
           }
@@ -54,10 +54,10 @@ export class DbService {
           this.workerMessages.next({type: 'info', message: splitData[0], detail: 'Chargement du dictionnaire'})
           break;
         case MESSAGES_RESPONSE.DB_IN_PROGRESS.toString():
-          if (splitData === '%') {
-            this.progress.next(splitData[1]);
+          if (splitData[2] === '%') {
+            this.progress.next(parseInt(splitData[1], 10));
           } else if (this.counterDictionnary) {
-            const percentage = parseInt((splitData[1] / this.counterDictionnary *100).toFixed(0))
+            const percentage = parseInt((parseInt(splitData[1], 10) / this.counterDictionnary * 100).toFixed(0), 10);
             if (percentage > this.progress.getValue()) {
               this.progress.next(percentage);
             }
