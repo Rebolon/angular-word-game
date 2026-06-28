@@ -20,7 +20,7 @@ import { DbService } from './services/database/db.service';
     </header>
     <main>
       @if (game) {
-        <my-grid [game]="game" />
+        <my-grid [game]="game" (back)="onBack()" />
       } @else {
         <my-game-select [selected]="defaultGame" (selected)="onSelected($event)" />
       }
@@ -71,5 +71,9 @@ export class AppComponent implements OnInit {
       default:
         console.error('Unknown Game received');
     }
+  }
+
+  protected onBack(): void {
+    this.game = undefined as any;
   }
 }

@@ -38,6 +38,7 @@ export interface GameBehavior {
   unSelectCase(boardCase: BoardCase): void
   getWords(): string[]
   words$: Observable<string[]>
+  chronologicalWords$: Observable<string[]>
 }
 
 export interface BoardCase {

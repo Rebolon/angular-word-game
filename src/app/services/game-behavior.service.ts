@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, from, map, of, switchMap, tap, finalize } from 'rxjs';
-import { Lang, db } from './database/db';
+import { Lang, db, dictionaryCache } from './database/db';
 import { BoardCase, BoardConfig, Coordinates, GameBehavior as GameBehaviorI } from './word-game.interface';
 import { liveQuery } from 'dexie';
 
@@ -10,6 +10,9 @@ export class GameBehavior implements GameBehaviorI {
   private selectedCases: BoardCase[] = [];
   #words: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
   public words$ = this.#words.asObservable();
+  private chronologicalWords: string[] = [];
+  #chronologicalWords: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
+  public chronologicalWords$ = this.#chronologicalWords.asObservable();
   private stopped: boolean = false;
   constructor(private boardConfig: BoardConfig, public readonly gridCases: BoardCase[][]) {
   }
@@ -42,6 +45,10 @@ export class GameBehavior implements GameBehaviorI {
           if (isRealWord) {
             const currentWords = this.#words.getValue();
             this.#words.next([...currentWords, word].sort());
+            
+            this.chronologicalWords.push(word);
+            this.#chronologicalWords.next([...this.chronologicalWords]);
+            
             return true;
           }
           throw new Error("Unknown word");
@@ -135,9 +142,7 @@ export class GameBehavior implements GameBehaviorI {
   }
 
   private isRealWord(currentWord: string): Observable<boolean> {
-    return from(db.words.where("value").equalsIgnoreCase(currentWord).count()).pipe(
-      map((value: number) => !!value)
-    );
+    return of(dictionaryCache.has(currentWord.toUpperCase()));
   }
 
   private isInTheBoard(boardCase: BoardCase): boolean {

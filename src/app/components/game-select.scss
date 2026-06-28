@@ -2,32 +2,140 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 80vh;
+    min-height: 60vh;
+    width: 100%;
 }
 
 form {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    padding: 3rem;
-    min-width: 300px;
+    gap: 2rem;
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 380px;
+    box-sizing: border-box;
 
     // Glassmorphism
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
-    border-radius: 16px;
+    border-radius: 20px;
 
     mat-form-field {
         width: 100%;
+        cursor: pointer;
+        
+        /* MDC Theme variables overrides for dark mode form-field text/labels */
+        --mdc-filled-text-field-label-text-color: rgba(255, 255, 255, 0.75) !important;
+        --mdc-filled-text-field-focus-label-text-color: #ffffff !important;
+        --mdc-filled-text-field-hover-label-text-color: rgba(255, 255, 255, 0.9) !important;
+        --mdc-filled-text-field-input-text-color: #ffffff !important;
+        
+        --mdc-outlined-text-field-label-text-color: rgba(255, 255, 255, 0.75) !important;
+        --mdc-outlined-text-field-focus-label-text-color: #ffffff !important;
+        --mdc-outlined-text-field-hover-label-text-color: rgba(255, 255, 255, 0.9) !important;
+        --mdc-outlined-text-field-input-text-color: #ffffff !important;
+
+        --mat-form-field-state-placeholder-color: rgba(255, 255, 255, 0.5) !important;
+        --mat-select-trigger-text-color: #ffffff !important;
+        
+        ::ng-deep {
+            /* Custom wrapper with higher contrast border and dark background */
+            .mat-mdc-text-field-wrapper {
+                background-color: rgba(15, 23, 42, 0.8) !important;
+                border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+                border-radius: 12px !important;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            }
+
+            /* Hover states */
+            .mat-mdc-text-field-wrapper:hover {
+                border-color: var(--primary-color) !important;
+                background-color: rgba(30, 41, 59, 0.7) !important;
+                box-shadow: 0 0 15px rgba(99, 102, 241, 0.3) !important;
+            }
+
+            /* Focused state */
+            &.mat-focused .mat-mdc-text-field-wrapper {
+                border-color: var(--primary-color) !important;
+                background-color: rgba(30, 41, 59, 0.8) !important;
+                box-shadow: 0 0 15px rgba(99, 102, 241, 0.4) !important;
+            }
+
+            /* Force all text/labels inside form field to white/translucent white */
+            .mdc-floating-label,
+            .mat-mdc-floating-label,
+            .mat-mdc-form-field-label, 
+            .mat-mdc-form-field-label mat-label,
+            .mdc-floating-label--float-above,
+            span.mat-mdc-select-placeholder,
+            .mat-mdc-select-value-text,
+            .mdc-text-field-helper-text {
+                color: rgba(255, 255, 255, 0.75) !important;
+                -webkit-text-fill-color: rgba(255, 255, 255, 0.75) !important;
+                font-weight: 600 !important;
+            }
+
+            /* When focused, label becomes white */
+            &.mat-focused .mdc-floating-label,
+            &.mat-focused .mat-mdc-floating-label,
+            &.mat-focused .mat-mdc-form-field-label mat-label {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+            }
+
+            /* Select arrow custom color and opacity */
+            .mat-mdc-select-arrow {
+                color: var(--primary-color) !important;
+                opacity: 1 !important;
+            }
+
+            /* Hide standard bottom ripple line indicator */
+            .mdc-line-ripple {
+                display: none !important;
+            }
+            
+            /* Remove underline spacer */
+            .mat-mdc-form-field-subscript-wrapper {
+                display: none !important;
+            }
+        }
     }
 
     button {
         width: 100%;
-        padding: 1.5rem;
-        font-size: 1.2rem;
+        padding: 1.6rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 30px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        border: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+
+        &:hover:not([disabled]) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.55);
+        }
+
+        &:active:not([disabled]) {
+            transform: translateY(0);
+        }
+
+        &[disabled] {
+            opacity: 0.5;
+            background: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: none;
+            color: rgba(255, 255, 255, 0.35) !important;
+            cursor: not-allowed;
+        }
     }
 }

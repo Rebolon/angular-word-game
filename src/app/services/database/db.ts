@@ -5,19 +5,20 @@ export enum Lang {
     EN,
 }
 
-export interface Word {
-    lang: Lang;
-    value: string;
+export interface DictionaryRecord {
+    key: string;
+    list: string[];
 }
 
-// @todo improve by using a composite key instead of auto-increment
+export const dictionaryCache = new Set<string>();
+
 export class DictionaryDB extends Dexie {
-    words!: Table<Word, number>;
+    words!: Table<DictionaryRecord, string>;
   
     constructor() {
-      super('ngdexieliveQuery');
-      this.version(3).stores({
-        words: '++,fr,value',
+      super('ngdexieliveQuery_v4');
+      this.version(5).stores({
+        words: 'key',
       });
       this.on('populate', () => this.populate());
     }

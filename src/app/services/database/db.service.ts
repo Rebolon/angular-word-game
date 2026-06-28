@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { MESSAGES_RESPONSE } from './messages-response';
 import { BehaviorSubject, Observable, filter } from 'rxjs';
 import { MESSAGES_REQUEST } from './messages-request';
+import { db, dictionaryCache } from './db';
 
 export interface WorkerMessage {
   type: 'info'|'success'|'warning'|'error'
@@ -68,9 +69,22 @@ export class DbService {
           }          
           break;
         case MESSAGES_RESPONSE.DB_POPULATED.toString():
-          this.progress.next(100);
-          this.workerMessages.next({type: 'success', message: splitData[0], detail: 'Dictionnaire chargé'})
-          this.worker.terminate();
+          db.words.get('fr').then(record => {
+            if (record && record.list) {
+              dictionaryCache.clear();
+              for (let i = 0; i < record.list.length; i++) {
+                dictionaryCache.add(record.list[i]);
+              }
+            }
+            this.progress.next(100);
+            this.workerMessages.next({type: 'success', message: splitData[0], detail: 'Dictionnaire chargé'})
+            this.worker.terminate();
+          }).catch(err => {
+            console.error('Failed to populate dictionaryCache', err);
+            this.progress.next(100);
+            this.workerMessages.next({type: 'success', message: splitData[0], detail: 'Dictionnaire chargé'})
+            this.worker.terminate();
+          });
           break;
         case MESSAGES_RESPONSE.INFO.toString():
           this.workerMessages.next({type: 'info', message: splitData[0], detail:  `In component, info received from worker ${data.toString()}`})
